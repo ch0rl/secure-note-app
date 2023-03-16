@@ -1,4 +1,5 @@
 # secure-note-app
+![Code Check](https://github.com/ch0rl/secure-note-app/actions/workflows/lint.yml/badge.svg)
 A "secure" note taking app that encrypts all data that isn't in use.
 
 ## app_files/
