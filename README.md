@@ -8,11 +8,8 @@ A "secure" note taking app that encrypts all data that isn't in use.
 {
     "PASSWORD HASH": "hashlib.pbkdf2_hmac hash of the user's password.",
     "PASSWORD_SALT": "pseudo-random password hash used above.",
-    "INDEX": [
-        {
-            "file name": "actual file name",
-            "display name": "name to display in the GUI"
-        }, ...
+    "FILES": [
+        "filename"
     ]
 }
 ```
