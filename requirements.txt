@@ -1,0 +1,2 @@
+pycryptodome==3.17
+PyQt5==5.15.9
