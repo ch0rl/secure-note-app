@@ -2,10 +2,10 @@
 A "secure" note taking app that encrypts all data that isn't in use.
 
 ## Install
-1. `git clone https://github.com/ch0rl/secure-note-app.git`
-2. `cd secure-note-app`
-3. `pip install -r requirements`
-4. `python Note-App.py`
+1. ```git clone https://github.com/ch0rl/secure-note-app.git```
+2. ```cd secure-note-app```
+3. ```pip install -r requirements```
+4. ```python Note-App.py```
 
 ## Details
 ### Files
