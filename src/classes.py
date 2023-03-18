@@ -12,21 +12,25 @@ class Note:
     def __init__(self, path: str, iv: bytes):
         self.path = "app_files/" + path
         self.content = ""
+        self.name = path
         self.iv = iv
 
-    def read(self, key: bytes, salt: bytes):
+    def read(self, key: bytes):
         """Read and decrypt file contents into memory."""
         with open(self.path, "rb") as f:
             ciphertext = f.read()
-        self.content = decrypt(ciphertext, key, salt, self.iv).decode()
+        self.content = decrypt(ciphertext, key, self.iv).decode()
 
-    def close(self, key: bytes, salt: bytes):
+    def close(self, key: bytes):
         """Encrypt and write file contents."""
-        ciphertext = encrypt(self.content.encode(), key, salt, self.iv)
+        self.save(key)
+        del self.content
+        
+    def save(self, key: bytes):
+        """Save the note to its file."""
+        ciphertext = encrypt(self.content.encode(), key, self.iv)
         with open(self.path, "wb") as f:
             f.write(ciphertext)
-
-        del self.content
 
 
 class New_Note_Dialog(QDialog, Ui_Dialog):
@@ -59,6 +63,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.tree_widget.itemClicked.connect(self.change_file_hook)
         self.new_button.clicked.connect(self.new_file_hook)
         self.delete_button.clicked.connect(self.delete_file_hook)
+        self.save_button.clicked.connect(self.save_file_hook)
 
         # Variables
         self.current_note: Note = None
@@ -83,13 +88,13 @@ class Window(QMainWindow, Ui_MainWindow):
         # If previous note exists, save it
         if self.current_note is not None:
             self.current_note.content = self.main_text_area.toPlainText()
-            self.current_note.close(self.key, self.key)
+            self.current_note.close(self.key)
 
         # Get new note
         self.current_note = Note(
-            current.text(0), self.manifest["IVs"][current.text(0)].encode()
+           current.text(0), self.manifest["IVs"][current.text(0)].encode()
         )
-        self.current_note.read(self.key, self.key)
+        self.current_note.read(self.key)
         self.current_widget = current
 
         # Display note contents
@@ -119,7 +124,7 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # Remove info from memory
         del self.current_note
-        del self.manifest["IVs"][self.current_widget.text(0)]
+        del self.manifest["IVs"][self.current_note.name]
 
         # Remove entry from LHS
         self.tree_widget.removeItemWidget(self.current_widget, 0)
@@ -128,3 +133,7 @@ class Window(QMainWindow, Ui_MainWindow):
         self.current_note = None
         self.current_widget = None
         self.main_text_area.setPlainText("")
+        
+    def save_file_hook(self):
+        self.current_note.content = self.main_text_area.toPlainText()
+        self.current_note.save(self.key)

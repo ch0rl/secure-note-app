@@ -70,7 +70,7 @@ if __name__ == "__main__":
 
     # Clean shutdown
     if win.current_note is not None:
-        win.current_note.close(key, manifest["PASSWORD SALT"].encode())
+        win.current_note.close(key)
     
     with open("app_files/manifest.json", "w") as f:
         json.dump(manifest, f)
