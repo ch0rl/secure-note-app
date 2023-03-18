@@ -9,7 +9,8 @@ from .config import *
 
 def encrypt(plaintext: bytes, key: bytes, salt: bytes, iv: bytes) -> bytes:
     cipher = AES.new(key, AES.MODE_CBC, iv)
-    return cipher.encrypt(plaintext + (" "*(16 - (len(plaintext) % 16))).encode())
+    return cipher.encrypt(
+        plaintext + (" " * (16 - (len(plaintext) % 16))).encode())
 
 
 def decrypt(ciphertext: bytes, key: bytes, salt: bytes, iv: bytes) -> bytes:
