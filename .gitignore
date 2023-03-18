@@ -1,5 +1,6 @@
 .vscode
 app_files/
+*.ui
 
 ## From github:
 # Byte-compiled / optimized / DLL files
