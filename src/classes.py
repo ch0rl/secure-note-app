@@ -68,16 +68,12 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # Files
         self.tree_widget.setColumnCount(1)
-        self.tree_widget.insertTopLevelItems(
-            0, map(
-                lambda x: QTreeWidgetItem(
-                    None, [x]), self.manifest["IVs"].keys()))
+        self.tree_widget.insertTopLevelItems(0, map(
+            lambda x: QTreeWidgetItem(None, [x]), self.manifest["IVs"].keys()
+        ))
 
-    def change_file_hook(
-            self,
-            current: QTreeWidgetItem,
-            previous: QTreeWidgetItem,
-            note_is_new=False):
+    def change_file_hook(self, current: QTreeWidgetItem, 
+                         previous: QTreeWidgetItem, note_is_new=False):
         # Need to create entry for new note
         if note_is_new:
             self.manifest["IVs"][current.text(0)] = new_IV()
@@ -90,8 +86,9 @@ class Window(QMainWindow, Ui_MainWindow):
             self.current_note.close(self.key, self.key)
 
         # Get new note
-        self.current_note = Note(current.text(0),
-                                 self.manifest["IVs"][current.text(0)].encode())
+        self.current_note = Note(
+            current.text(0), self.manifest["IVs"][current.text(0)].encode()
+        )
         self.current_note.read(self.key, self.key)
         self.current_widget = current
 

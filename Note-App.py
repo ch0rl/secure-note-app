@@ -48,11 +48,9 @@ def setup() -> Tuple[bytes, Dict]:
             exit(1)
 
     # Get PBKDF2 of password
-    pbkdf2 = hashlib.pbkdf2_hmac(
-        "sha256",
-        password.encode(),
-        manifest["PASSWORD SALT"].encode(),
-        PBKD_ITERATIONS)
+    pbkdf2 = hashlib.pbkdf2_hmac("sha256", password.encode(), 
+        manifest["PASSWORD SALT"].encode(), PBKD_ITERATIONS
+    )
 
     del password
 
@@ -71,6 +69,8 @@ if __name__ == "__main__":
     exit_code = app.exec()
 
     # Clean shutdown
-    win.current_note.close(key, manifest["PASSWORD SALT"].encode())
+    if win.current_note is not None:
+        win.current_note.close(key, manifest["PASSWORD SALT"].encode())
+    
     with open("app_files/manifest.json", "w") as f:
         json.dump(manifest, f)
