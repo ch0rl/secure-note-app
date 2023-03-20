@@ -127,8 +127,8 @@ class Window(QMainWindow, Ui_MainWindow):
         os.remove(self.current_note.path)
 
         # Remove info from memory
-        del self.current_note
         del self.manifest["IVs"][self.current_note.name]
+        del self.current_note
 
         # Remove entry from LHS
         self.tree_widget.removeItemWidget(self.current_widget, 0)
