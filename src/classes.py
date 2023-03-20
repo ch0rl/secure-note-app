@@ -10,10 +10,14 @@ from .crypto import encrypt, decrypt, new_IV
 
 class Note:
     def __init__(self, path: str, iv: bytes):
-        self.path = "app_files/" + path
-        self.content = ""
-        self.name = path
+        self.path = os.path.join("./app_files/", path)
+        self.content = ""        
         self.iv = iv
+        
+        if "/" in path:
+            self.name = path[path.index("/")+1:]
+        else:
+            self.name = path
 
     def read(self, key: bytes):
         """Read and decrypt file contents into memory."""
@@ -82,7 +86,7 @@ class Window(QMainWindow, Ui_MainWindow):
         # Need to create entry for new note
         if note_is_new:
             self.manifest["IVs"][current.text(0)] = new_IV()
-            with open(f"app_files/{current.text(0)}", "w") as f:
+            with open(os.path.join("./app_files/", current.text(0)), "w") as f:
                 pass
 
         # If previous note exists, save it
