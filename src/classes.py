@@ -2,23 +2,29 @@
 
 import os
 
+from typing import List, DefaultDict
 from PyQt5.QtWidgets import QDialog, QMainWindow, QTreeWidgetItem, QErrorMessage
 
 from .NoteAppUI import *
-from .crypto import encrypt, decrypt, new_IV
+from .crypto import encrypt, decrypt
 
 
 class Note(QTreeWidgetItem):
-    def __init__(self, path: str, iv: bytes):
+    def __init__(self, path: str, iv: bytes, is_dir: bool = False):
         super().__init__()
         
         # Set variables
-        self.path = os.path.join("./app_files/", path)
+        self.path = path
         self.content = ""        
         self.iv = iv
+        self.is_dir = is_dir
         
         # Get filename
         self.name = os.path.basename(path)
+        self.setText(0, self.name)
+        
+        # Save children as Notes
+        self.children: List[Note] = []
 
     def read(self, key: bytes):
         """Read and decrypt file contents into memory."""
@@ -36,6 +42,11 @@ class Note(QTreeWidgetItem):
         ciphertext = encrypt(self.content.encode(), key, self.iv)
         with open(self.path, "wb") as f:
             f.write(ciphertext)
+            
+    def addChild(self, child: 'Note'):
+        """Wrapper for addChild."""
+        self.children.append(child)
+        return super().addChild(child)
 
 
 class New_Note_Dialog(QDialog, Ui_Dialog):
@@ -59,7 +70,7 @@ class New_Note_Dialog(QDialog, Ui_Dialog):
 
 
 class Window(QMainWindow, Ui_MainWindow):
-    def __init__(self, key: bytes, manifest, parent=None):
+    def __init__(self, key: bytes, IVs: DefaultDict[str, str], parent=None):
         # Setup UI
         super().__init__(parent)
         self.setupUi(self)
@@ -72,23 +83,21 @@ class Window(QMainWindow, Ui_MainWindow):
 
         # Variables
         self.current_note: Note = None
-        self.current_widget: QTreeWidgetItem = None
         self.key = key
-        self.manifest = manifest
+        self.IVs = IVs
 
         # Files
         self.tree_widget.setColumnCount(1)
-        self.tree_widget.insertTopLevelItems(0, map(
-            lambda x: QTreeWidgetItem(None, [x]), self.manifest["IVs"].keys()
-        ))
-
-    def change_file_hook(self, current: QTreeWidgetItem, 
-                         previous: QTreeWidgetItem, note_is_new=False):
+        
+    def change_file_hook(self, current: Note, previous: Note, note_is_new=False):
+        # Check if note is a directory
+        if current.is_dir:
+            return
+        
         # Need to create entry for new note
         if note_is_new:
-            self.manifest["IVs"][current.text(0)] = new_IV()
-            with open(os.path.join("./app_files/", current.text(0)), "w") as f:
-                pass
+            os.makedirs(os.path.split(current.path)[0], exist_ok=True)
+            with open(current.path, "w"): pass
 
         # If previous note exists, save it
         if self.current_note is not None:
@@ -96,47 +105,72 @@ class Window(QMainWindow, Ui_MainWindow):
             self.current_note.close(self.key)
 
         # Get new note
-        self.current_note = Note(
-           current.text(0), self.manifest["IVs"][current.text(0)].encode()
-        )
-        self.current_note.read(self.key)
-        self.current_widget = current
+        self.current_note = current
+        current.read(self.key)
 
         # Display note contents
-        self.main_text_area.setPlainText(self.current_note.content)
+        self.main_text_area.setPlainText(current.content)
 
     def new_file_hook(self):
         dialog = New_Note_Dialog(self)
         dialog.exec()  # Blocks until closed
 
+        new_note_name = dialog.new_note_name
+
         # If not empty, user pressed "create"
-        if dialog.new_note_name != "":
+        if new_note_name != "":
             # Check if note already exists
-            for i in self.manifest["IVs"].keys():
-                if i == dialog.new_note_name:
-                    err = QErrorMessage(self)
-                    err.showMessage(f"A file with name {i} already exists.")
-                    break
+            if new_note_name in self.IVs.keys():
+                err = QErrorMessage(self)
+                err.showMessage(f"A file with path {new_note_name} already exists.")
             else:
                 # Create new note
-                new_note_widget = QTreeWidgetItem(None, [dialog.new_note_name])
-                self.tree_widget.insertTopLevelItem(0, new_note_widget)
-                self.change_file_hook(new_note_widget, None, note_is_new=True)
+                dir_node: Note = self.tree_widget.topLevelItem(0)
+                expanded_path = new_note_name.split("/")
+                prev_path = "./app_files"
+                
+                # Iterate over path
+                while len(expanded_path) > 1:
+                    d = expanded_path.pop(0)
+                    prev_path += f"/{d}"
+                    
+                    for i in dir_node.children:
+                        if i.name == d:
+                            dir_node = i
+                            break
+                    else:
+                        # Create dir node if it doesn't exist
+                        node = Note(prev_path, self.IVs[prev_path].encode(), True)
+                        dir_node.addChild(node)
+                        dir_node = node
+                      
+                # Save new note
+                new_note_name = "./app_files/" + new_note_name
+                new_note = Note(new_note_name, self.IVs[new_note_name].encode())
+                dir_node.addChild(new_note)
+                self.change_file_hook(new_note, self.current_note, True)
 
-    def delete_file_hook(self):
-        # Remove file
-        os.remove(self.current_note.path)
+    def delete_file_hook(self, /, note: Note | None = None):
+        if not note:
+            note = self.current_note
+        
+        # Remove file/dir
+        if note.is_dir:
+            for i in note.children:
+                self.delete_file_hook(note=i)
+            os.removedirs(note.path)
+        else:
+            os.remove(note.path)
 
-        # Remove info from memory
-        del self.manifest["IVs"][self.current_note.name]
-        del self.current_note
+        # Remove IV
+        del self.IVs[note.path]
 
         # Remove entry from LHS
-        self.tree_widget.removeItemWidget(self.current_widget, 0)
+        self.tree_widget.removeItemWidget(note, 0)
+        del note
 
         # Reset vars
         self.current_note = None
-        self.current_widget = None
         self.main_text_area.setPlainText("")
         
     def save_file_hook(self):

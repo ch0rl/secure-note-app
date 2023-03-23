@@ -8,7 +8,8 @@ import sys
 import json
 import hashlib
 import getpass
-from typing import Dict, Tuple
+from collections import defaultdict
+from typing import Dict, Tuple, DefaultDict
 
 from PyQt5.QtWidgets import QApplication
 
@@ -17,7 +18,7 @@ from src.config import *
 from src.crypto import _hash, new_IV
 
 
-def setup() -> Tuple[bytes, Dict]:
+def setup() -> Tuple[bytes, DefaultDict]:
     """Loads and returns the password (pbkdf2 thereof) and manifest."""
     with open("app_files/manifest.json") as f:
         manifest = json.load(f)
@@ -54,7 +55,37 @@ def setup() -> Tuple[bytes, Dict]:
 
     del password
 
+    # Make IVs a defaultdict
+    manifest["IVs"] = defaultdict(new_IV, manifest["IVs"])
+    
     return pbkdf2, manifest
+
+
+def load_files(head: Note, IVs: DefaultDict):
+    """Load files/directories into the tree."""
+    
+    def __recurse_dir(dir: str, current_dir_node: Note):
+        # Go through directories
+        for d in filter(
+            lambda x: os.path.isdir(os.path.join(dir, x)), os.listdir(dir)
+        ):
+            d = os.path.join(dir, d)
+            dir_node = Note(d, IVs[d].encode(), True)
+            current_dir_node.addChild(dir_node)
+            
+            __recurse_dir(d, dir_node)
+        
+        # Go through files
+        for f in filter(
+            lambda x: os.path.isfile(os.path.join(dir, x)), os.listdir(dir)
+        ):
+            f = os.path.join(dir, f)
+            # Ignore manifest
+            if f == "./app_files/manifest.json": continue
+            
+            current_dir_node.addChild(Note(f, IVs[f].encode()))        
+        
+    __recurse_dir("./app_files/", head)
 
 
 if __name__ == "__main__":
@@ -63,7 +94,13 @@ if __name__ == "__main__":
 
     # Start window
     app = QApplication(sys.argv)
-    win = Window(key, manifest)
+    win = Window(key, manifest["IVs"])
+    
+    # Load tree
+    head = Note("./app_files", bytes(0), True)
+    load_files(head, manifest["IVs"])
+    win.tree_widget.addTopLevelItem(head)
+    
     win.show()
 
     exit_code = app.exec()
