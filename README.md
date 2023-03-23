@@ -1,6 +1,8 @@
 # secure-note-app
 A "secure" note taking app that encrypts all data that isn't in use.
 
+**This is a legacy version.**
+
 ## Install
 1. ```git clone https://github.com/ch0rl/secure-note-app.git```
 2. ```cd secure-note-app```
@@ -26,15 +28,3 @@ Encryption, hashing, and IV-generation algorithms can easily be changed by chang
 
 ## Known Issues
 - 'Delete'ing a note does not remove it from the list.
-## TODO
-- [x] Prototype
-- [ ] Speed up processing
-- [x] 'Add'/'Delete' options
-- [x] Better IV per file
-- [ ] Standalone? (ie., don't rely on Crypto/hashlib)
-- [ ] Look nicer?
-- [ ] 2fa?
-- [ ] Directories
-- [ ] Error handling
-- [ ] Proper padding (not just spaces)
-- [ ] Path handling
