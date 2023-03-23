@@ -92,6 +92,8 @@ class Window(QMainWindow, Ui_MainWindow):
     def change_file_hook(self, current: Note, previous: Note, note_is_new=False):
         # Check if note is a directory
         if current.is_dir:
+            self.current_note = current
+            self.main_text_area.setPlainText("")
             return
         
         # Need to create entry for new note
@@ -100,7 +102,7 @@ class Window(QMainWindow, Ui_MainWindow):
             with open(current.path, "w"): pass
 
         # If previous note exists, save it
-        if self.current_note is not None:
+        if self.current_note is not None and not self.current_note.is_dir:
             self.current_note.content = self.main_text_area.toPlainText()
             self.current_note.close(self.key)
 
@@ -158,7 +160,7 @@ class Window(QMainWindow, Ui_MainWindow):
         if note.is_dir:
             for i in note.children:
                 self.delete_file_hook(note=i)
-            os.removedirs(note.path)
+            os.rmdir(note.path)
         else:
             os.remove(note.path)
 
