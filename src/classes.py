@@ -8,16 +8,17 @@ from .NoteAppUI import *
 from .crypto import encrypt, decrypt, new_IV
 
 
-class Note:
+class Note(QTreeWidgetItem):
     def __init__(self, path: str, iv: bytes):
+        super().__init__()
+        
+        # Set variables
         self.path = os.path.join("./app_files/", path)
         self.content = ""        
         self.iv = iv
         
-        if "/" in path:
-            self.name = path[path.index("/")+1:]
-        else:
-            self.name = path
+        # Get filename
+        self.name = os.path.basename(path)
 
     def read(self, key: bytes):
         """Read and decrypt file contents into memory."""
