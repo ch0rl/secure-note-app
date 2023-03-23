@@ -25,7 +25,7 @@ Any sensitive information is removed from memory once it is no longer needed.
 Encryption, hashing, and IV-generation algorithms can easily be changed by changing their respective functions in [crypto.py](./src/crypto.py).
 
 ## Known Issues
-- 'Delete'ing a note does not remove it from the list.
+- Deleting a directory currently doesn't work
 ## TODO
 - [x] Prototype
 - [ ] Speed up processing
@@ -34,7 +34,7 @@ Encryption, hashing, and IV-generation algorithms can easily be changed by chang
 - [ ] Standalone? (ie., don't rely on Crypto/hashlib)
 - [ ] Look nicer?
 - [ ] 2fa?
-- [ ] Directories
+- [x] Directories
 - [ ] Error handling
 - [ ] Proper padding (not just spaces)
 - [ ] Path handling

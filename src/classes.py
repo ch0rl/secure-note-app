@@ -166,7 +166,7 @@ class Window(QMainWindow, Ui_MainWindow):
         del self.IVs[note.path]
 
         # Remove entry from LHS
-        self.tree_widget.removeItemWidget(note, 0)
+        note.parent().removeChild(note)
         del note
 
         # Reset vars
